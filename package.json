@@ -1,0 +1,21 @@
+{
+  "name": "fabio-cafe-system",
+  "version": "1.0.0",
+  "description": "Complete cafe menu system with admin panel",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev:frontend & npm run dev:backend",
+    "dev:frontend": "npm --workspace=frontend run dev",
+    "dev:backend": "npm --workspace=backend run dev",
+    "build": "npm --workspace=frontend run build && npm --workspace=backend run build",
+    "start": "npm --workspace=backend run start",
+    "install:all": "npm install && npm --workspace=frontend install && npm --workspace=backend install"
+  },
+  "keywords": ["cafe", "menu", "nextjs", "express", "prisma", "postgresql"],
+  "author": "Fabio Cafe System",
+  "license": "MIT"
+}
