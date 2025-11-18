@@ -15,7 +15,17 @@
     "start": "npm --workspace=backend run start",
     "install:all": "npm install && npm --workspace=frontend install && npm --workspace=backend install"
   },
-  "keywords": ["cafe", "menu", "nextjs", "express", "prisma", "postgresql"],
+  "keywords": [
+    "cafe",
+    "menu",
+    "nextjs",
+    "express",
+    "prisma",
+    "postgresql"
+  ],
   "author": "Fabio Cafe System",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "tailwindcss-animate": "^1.0.7"
+  }
 }
