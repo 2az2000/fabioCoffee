@@ -1,104 +1,124 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// این فایل شمای Prisma برای تعریف مدل‌های پایگاه داده است.
+// این مدل‌ها ساختار داده‌های سیستم مدیریت کافه (Fabio Cafe) را مشخص می‌کنند.
 
+// تعریف کلاینت Prisma برای تولید تایپ‌اسکریپت
 generator client {
   provider = "prisma-client-js"
 }
 
+// تعریف منبع داده (دیتابیس)
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql" // استفاده از PostgreSQL
+  url      = env("DATABASE_URL") // آدرس اتصال از متغیر محیطی خوانده می‌شود
 }
 
+// -----------------------------------------------------------------------------
+// مدل‌های مدیریتی (Admin)
+// -----------------------------------------------------------------------------
+
+// مدل Admin: برای احراز هویت مدیران سیستم
 model Admin {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid()) // شناسه منحصر به فرد
+  email     String   @unique // ایمیل مدیر (باید منحصر به فرد باشد)
+  password  String // رمز عبور هش شده
+  createdAt DateTime @default(now()) // زمان ایجاد رکورد
+  updatedAt DateTime @updatedAt // زمان آخرین به‌روزرسانی
 
-  @@map("admins")
+  @@map("admins") // نام جدول در پایگاه داده
 }
 
+// -----------------------------------------------------------------------------
+// مدل‌های منو (Menu)
+// -----------------------------------------------------------------------------
+
+// مدل Category: برای دسته‌بندی آیتم‌های منو (مانند قهوه، دسر، نوشیدنی سرد)
 model Category {
-  id        String   @id @default(cuid())
-  name      String
-  description String?
-  isActive  Boolean  @default(true)
+  id        String   @id @default(cuid()) // شناسه منحصر به فرد
+  name      String // نام دسته
+  description String? // توضیحات اختیاری
+  isActive  Boolean  @default(true) // وضعیت فعال بودن (برای نمایش در منو)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items Item[]
+  items Item[] // رابطه یک به چند: یک دسته می‌تواند شامل چندین آیتم باشد
 
   @@map("categories")
 }
 
+// مدل Item: برای تعریف آیتم‌های قابل سفارش در منو
 model Item {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  imageUrl    String?
-  isActive    Boolean  @default(true)
+  id          String   @id @default(cuid()) // شناسه منحصر به فرد
+  name        String // نام آیتم
+  description String? // توضیحات آیتم
+  price       Decimal  @db.Decimal(10, 2) // قیمت آیتم (با دقت 10 رقم و 2 رقم اعشار)
+  imageUrl    String? // آدرس تصویر آیتم
+  isActive    Boolean  @default(true) // وضعیت فعال بودن
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String // کلید خارجی برای اتصال به Category
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade) // رابطه با مدل Category (حذف آبشاری)
   
-  orderItems OrderItem[]
+  orderItems OrderItem[] // رابطه یک به چند: یک آیتم می‌تواند در چندین سفارش وجود داشته باشد
 
   @@map("items")
 }
 
-// Future expansion models
+// -----------------------------------------------------------------------------
+// مدل‌های سفارش (Order)
+// -----------------------------------------------------------------------------
+
+// مدل Table: برای مدیریت میزهای کافه
 model Table {
-  id        String   @id @default(cuid())
-  number    Int      @unique
-  capacity  Int      @default(4)
-  isActive  Boolean  @default(true)
+  id        String   @id @default(cuid()) // شناسه منحصر به فرد
+  number    Int      @unique // شماره میز (باید منحصر به فرد باشد)
+  capacity  Int      @default(4) // ظرفیت میز
+  isActive  Boolean  @default(true) // وضعیت فعال بودن میز
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders Order[]
+  orders Order[] // رابطه یک به چند: یک میز می‌تواند چندین سفارش داشته باشد
 
   @@map("tables")
 }
 
+// مدل Order: برای ثبت سفارشات مشتریان
 model Order {
-  id          String      @id @default(cuid())
-  status      OrderStatus @default(PENDING)
-  totalPrice  Decimal     @db.Decimal(10, 2)
-  tableNumber Int
+  id          String      @id @default(cuid()) // شناسه سفارش
+  status      OrderStatus @default(PENDING) // وضعیت سفارش (با استفاده از Enum)
+  totalPrice  Decimal     @db.Decimal(10, 2) // مجموع قیمت سفارش
+  tableNumber Int // شماره میز (برای دسترسی سریع بدون نیاز به Join)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  tableId String
-  table   Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableId String // کلید خارجی برای اتصال به Table
+  table   Table @relation(fields: [tableId], references: [id], onDelete: Cascade) // رابطه با مدل Table
 
-  items OrderItem[]
+  items OrderItem[] // آیتم‌های موجود در این سفارش
 
   @@map("orders")
 }
 
+// مدل OrderItem: جدول واسط برای نگهداری جزئیات آیتم‌های هر سفارش (رابطه چند به چند بین Order و Item)
 model OrderItem {
-  id       String  @id @default(cuid())
-  quantity Int
-  price    Decimal @db.Decimal(10, 2)
+  id       String  @id @default(cuid()) // شناسه منحصر به فرد
+  quantity Int // تعداد آیتم سفارش داده شده
+  price    Decimal @db.Decimal(10, 2) // قیمت آیتم در زمان ثبت سفارش (برای حفظ تاریخچه قیمت)
 
-  orderId String
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String // کلید خارجی برای اتصال به Order
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade) // رابطه با مدل Order
 
-  itemId String
-  item   Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId String // کلید خارجی برای اتصال به Item
+  item   Item  @relation(fields: [itemId], references: [id], onDelete: Cascade) // رابطه با مدل Item
 
   @@map("order_items")
 }
 
+// Enum برای تعریف وضعیت‌های مختلف سفارش
 enum OrderStatus {
-  PENDING
-  PREPARING
-  READY
-  COMPLETED
-  CANCELLED
+  PENDING // در انتظار تایید
+  PREPARING // در حال آماده‌سازی
+  READY // آماده تحویل
+  COMPLETED // تکمیل شده
+  CANCELLED // لغو شده
 }

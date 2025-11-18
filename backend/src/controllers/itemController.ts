@@ -4,34 +4,46 @@ import { createItemSchema, updateItemSchema } from '../utils/validation';
 import { ApiResponse, Item } from '../types';
 
 /**
- * Get all items
+ * کنترلر دریافت تمام آیتم‌های فعال
+ * وظیفه: بازیابی لیست آیتم‌های فعال منو، با قابلیت فیلتر بر اساس دسته‌بندی و جستجو بر اساس نام/توضیحات.
+ * الگوریتم: استفاده از فیلتر `where` در Prisma برای اعمال فیلترها و جستجوی case-insensitive.
  */
 export const getItems = async (req: Request, res: Response<ApiResponse<Item[]>>): Promise<void> => {
   try {
     const { categoryId, search } = req.query;
     
+    // شرط اولیه: فقط آیتم‌های فعال
     const where: any = { isActive: true };
     
+    // فیلتر بر اساس شناسه دسته‌بندی
     if (categoryId) {
       where.categoryId = categoryId;
     }
     
+    // فیلتر جستجو بر اساس نام یا توضیحات (جستجوی OR)
     if (search) {
       where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } }
+        { name: { contains: search as string, mode: 'insensitive' } }, // جستجوی نام
+        { description: { contains: search as string, mode: 'insensitive' } } // جستجوی توضیحات
       ];
     }
 
+    // بازیابی آیتم‌ها به همراه اطلاعات دسته‌بندی مرتبط
     const items = await prisma.item.findMany({
       where,
       include: { category: true },
       orderBy: { name: 'asc' }
     });
 
+    // تبدیل نوع Decimal قیمت به Number برای سازگاری با پاسخ JSON
+    const formattedItems = items.map((item: any) => ({
+      ...item,
+      price: Number(item.price)
+    }));
+
     res.json({
       success: true,
-      data: items
+      data: formattedItems
     });
   } catch (error) {
     console.error('Get items error:', error);
@@ -43,7 +55,8 @@ export const getItems = async (req: Request, res: Response<ApiResponse<Item[]>>)
 };
 
 /**
- * Get item by ID
+ * کنترلر دریافت آیتم بر اساس شناسه
+ * وظیفه: بازیابی جزئیات یک آیتم خاص.
  */
 export const getItemById = async (req: Request, res: Response<ApiResponse<Item>>): Promise<void> => {
   try {
@@ -57,6 +70,7 @@ export const getItemById = async (req: Request, res: Response<ApiResponse<Item>>
       return;
     }
 
+    // بازیابی آیتم به همراه دسته‌بندی
     const item = await prisma.item.findUnique({
       where: { id },
       include: { category: true }
@@ -70,7 +84,7 @@ export const getItemById = async (req: Request, res: Response<ApiResponse<Item>>
       return;
     }
 
-    // Convert Decimal to number for price
+    // تبدیل Decimal به number برای قیمت
     const formattedItem = {
       ...item,
       price: Number(item.price)
@@ -90,10 +104,12 @@ export const getItemById = async (req: Request, res: Response<ApiResponse<Item>>
 };
 
 /**
- * Create new item
+ * کنترلر ایجاد آیتم جدید (Admin Only)
+ * وظیفه: اعتبارسنجی ورودی، بررسی وجود دسته‌بندی و ایجاد آیتم جدید.
  */
 export const createItem = async (req: Request, res: Response<ApiResponse<Item>>): Promise<void> => {
   try {
+    // 1. اعتبارسنجی بدنه درخواست
     const validationResult = createItemSchema.safeParse(req.body);
     if (!validationResult.success) {
       res.status(400).json({
@@ -104,7 +120,7 @@ export const createItem = async (req: Request, res: Response<ApiResponse<Item>>)
       return;
     }
 
-    // Check if category exists
+    // 2. بررسی وجود دسته‌بندی مرتبط
     const category = await prisma.category.findUnique({
       where: { id: validationResult.data.categoryId }
     });
@@ -117,21 +133,23 @@ export const createItem = async (req: Request, res: Response<ApiResponse<Item>>)
       return;
     }
 
-    // Clean data by removing undefined properties
+    // 3. پاکسازی داده‌ها
     const cleanData = Object.fromEntries(
       Object.entries(validationResult.data).filter(([_, value]) => value !== undefined)
     );
 
+    // 4. ایجاد آیتم
     const item = await prisma.item.create({
       data: cleanData as any
     });
 
+    // 5. بازیابی آیتم ایجاد شده به همراه اطلاعات دسته‌بندی برای پاسخ
     const itemWithCategory = await prisma.item.findUnique({
       where: { id: item.id },
       include: { category: true }
     });
 
-    // Convert Decimal to number for price
+    // 6. تبدیل Decimal به number
     const formattedItem = {
       ...itemWithCategory!,
       price: Number(itemWithCategory!.price)
@@ -152,7 +170,8 @@ export const createItem = async (req: Request, res: Response<ApiResponse<Item>>)
 };
 
 /**
- * Update item
+ * کنترلر به‌روزرسانی آیتم (Admin Only)
+ * وظیفه: اعتبارسنجی ورودی، بررسی وجود دسته‌بندی جدید (در صورت تغییر) و به‌روزرسانی آیتم.
  */
 export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>): Promise<void> => {
   try {
@@ -166,6 +185,7 @@ export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>)
       return;
     }
 
+    // 1. اعتبارسنجی بدنه درخواست
     const validationResult = updateItemSchema.safeParse(req.body);
     
     if (!validationResult.success) {
@@ -177,7 +197,7 @@ export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>)
       return;
     }
 
-    // If categoryId is being updated, check if it exists
+    // 2. اگر categoryId در حال به‌روزرسانی است، وجود آن را بررسی کنید
     if (validationResult.data.categoryId) {
       const category = await prisma.category.findUnique({
         where: { id: validationResult.data.categoryId }
@@ -192,18 +212,19 @@ export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>)
       }
     }
 
-    // Clean data by removing undefined properties
+    // 3. پاکسازی داده‌ها
     const cleanData = Object.fromEntries(
       Object.entries(validationResult.data).filter(([_, value]) => value !== undefined)
     );
 
+    // 4. به‌روزرسانی آیتم و بازیابی اطلاعات دسته‌بندی
     const item = await prisma.item.update({
       where: { id },
       data: cleanData as any,
       include: { category: true }
     });
 
-    // Convert Decimal to number for price
+    // 5. تبدیل Decimal به number
     const formattedItem = {
       ...item,
       price: Number(item.price)
@@ -216,6 +237,7 @@ export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>)
     });
   } catch (error) {
     console.error('Update item error:', error);
+    // مدیریت خطای P2025 (رکورد پیدا نشد)
     if ((error as any).code === 'P2025') {
       res.status(404).json({
         success: false,
@@ -231,7 +253,8 @@ export const updateItem = async (req: Request, res: Response<ApiResponse<Item>>)
 };
 
 /**
- * Delete item
+ * کنترلر حذف آیتم (Admin Only)
+ * وظیفه: حذف یک آیتم بر اساس شناسه.
  */
 export const deleteItem = async (req: Request, res: Response<ApiResponse<null>>): Promise<void> => {
   try {
@@ -245,6 +268,7 @@ export const deleteItem = async (req: Request, res: Response<ApiResponse<null>>)
       return;
     }
 
+    // حذف رکورد
     await prisma.item.delete({
       where: { id }
     });
@@ -255,6 +279,7 @@ export const deleteItem = async (req: Request, res: Response<ApiResponse<null>>)
     });
   } catch (error) {
     console.error('Delete item error:', error);
+    // مدیریت خطای P2025 (رکورد پیدا نشد)
     if ((error as any).code === 'P2025') {
       res.status(404).json({
         success: false,

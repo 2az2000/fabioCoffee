@@ -3,10 +3,12 @@ import { prisma } from '../prisma/client';
 import { ApiResponse } from '../types';
 
 /**
- * Get all tables
+ * کنترلر دریافت تمام میزها
+ * وظیفه: بازیابی لیست تمام میزها، مرتب شده بر اساس شماره میز.
  */
 export const getTables = async (req: Request, res: Response<ApiResponse<any[]>>): Promise<void> => {
   try {
+    // بازیابی تمام میزها
     const tables = await prisma.table.findMany({
       orderBy: { number: 'asc' }
     });
@@ -25,7 +27,9 @@ export const getTables = async (req: Request, res: Response<ApiResponse<any[]>>)
 };
 
 /**
- * Get table by ID
+ * کنترلر دریافت میز بر اساس شناسه
+ * وظیفه: بازیابی جزئیات یک میز خاص به همراه سفارشات فعال (PENDING, PREPARING, READY) مرتبط با آن.
+ * منطق پیاده‌سازی: استفاده از `include` و `where` تو در تو برای فیلتر کردن سفارشات فعال.
  */
 export const getTableById = async (req: Request, res: Response<ApiResponse<any>>): Promise<void> => {
   try {
@@ -39,19 +43,21 @@ export const getTableById = async (req: Request, res: Response<ApiResponse<any>>
       return;
     }
 
+    // بازیابی میز و سفارشات فعال
     const table = await prisma.table.findUnique({
       where: { id },
       include: {
         orders: {
           where: {
             status: {
+              // فیلتر برای وضعیت‌های فعال سفارش
               in: ['PENDING', 'PREPARING', 'READY']
             }
           },
           include: {
             items: {
               include: {
-                item: true
+                item: true // جزئیات آیتم‌های سفارش
               }
             }
           }

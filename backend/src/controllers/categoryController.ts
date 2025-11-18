@@ -4,10 +4,12 @@ import { createCategorySchema, updateCategorySchema, idParamSchema } from '../ut
 import { ApiResponse, Category } from '../types';
 
 /**
- * Get all categories
+ * کنترلر دریافت تمام دسته‌بندی‌های فعال
+ * وظیفه: بازیابی لیست دسته‌بندی‌هایی که isActive=true هستند (برای نمایش در منوی مشتری).
  */
 export const getCategories = async (req: Request, res: Response<ApiResponse<Category[]>>): Promise<void> => {
   try {
+    // بازیابی دسته‌بندی‌های فعال و مرتب‌سازی بر اساس نام
     const categories = await prisma.category.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' }
@@ -27,12 +29,14 @@ export const getCategories = async (req: Request, res: Response<ApiResponse<Cate
 };
 
 /**
- * Get category by ID
+ * کنترلر دریافت دسته‌بندی بر اساس شناسه
+ * وظیفه: بازیابی جزئیات یک دسته‌بندی خاص، شامل آیتم‌های مرتبط با آن.
  */
 export const getCategoryById = async (req: Request, res: Response<ApiResponse<Category>>): Promise<void> => {
   try {
     const { id } = req.params;
 
+    // اعتبارسنجی پارامتر ID
     if (!id) {
       res.status(400).json({
         success: false,
@@ -41,12 +45,14 @@ export const getCategoryById = async (req: Request, res: Response<ApiResponse<Ca
       return;
     }
 
+    // بازیابی دسته‌بندی و آیتم‌های مرتبط (Include items)
     const category = await prisma.category.findUnique({
       where: { id },
       include: { items: true }
     });
 
     if (!category) {
+      // در صورت پیدا نشدن، خطای 404
       res.status(404).json({
         success: false,
         error: 'Category not found'
@@ -68,10 +74,13 @@ export const getCategoryById = async (req: Request, res: Response<ApiResponse<Ca
 };
 
 /**
- * Create new category
+ * کنترلر ایجاد دسته‌بندی جدید (Admin Only)
+ * وظیفه: اعتبارسنجی ورودی و ذخیره یک دسته‌بندی جدید در دیتابیس.
+ * الگوی پیاده‌سازی: استفاده از Zod برای اعتبارسنجی و حذف فیلدهای undefined قبل از ارسال به Prisma.
  */
 export const createCategory = async (req: Request, res: Response<ApiResponse<Category>>): Promise<void> => {
   try {
+    // 1. اعتبارسنجی بدنه درخواست
     const validationResult = createCategorySchema.safeParse(req.body);
     if (!validationResult.success) {
       res.status(400).json({
@@ -82,15 +91,17 @@ export const createCategory = async (req: Request, res: Response<ApiResponse<Cat
       return;
     }
 
-    // Clean data by removing undefined properties
+    // 2. پاکسازی داده‌ها: حذف فیلدهایی که مقدار undefined دارند (برای جلوگیری از خطای Prisma)
     const cleanData = Object.fromEntries(
       Object.entries(validationResult.data).filter(([_, value]) => value !== undefined)
     );
 
+    // 3. ایجاد رکورد جدید در دیتابیس
     const category = await prisma.category.create({
-      data: cleanData as any
+      data: cleanData as any // استفاده از 'as any' برای سازگاری با تایپ‌های جزئی Zod
     });
 
+    // 4. ارسال پاسخ موفقیت‌آمیز
     res.status(201).json({
       success: true,
       data: category,
@@ -98,6 +109,7 @@ export const createCategory = async (req: Request, res: Response<ApiResponse<Cat
     });
   } catch (error) {
     console.error('Create category error:', error);
+    // مدیریت خطای احتمالی تکراری بودن نام (اگر Unique بود) یا خطاهای دیگر
     res.status(500).json({
       success: false,
       error: 'Internal server error'
@@ -106,7 +118,8 @@ export const createCategory = async (req: Request, res: Response<ApiResponse<Cat
 };
 
 /**
- * Update category
+ * کنترلر به‌روزرسانی دسته‌بندی (Admin Only)
+ * وظیفه: اعتبارسنجی ورودی و به‌روزرسانی یک دسته‌بندی موجود.
  */
 export const updateCategory = async (req: Request, res: Response<ApiResponse<Category>>): Promise<void> => {
   try {
@@ -120,6 +133,7 @@ export const updateCategory = async (req: Request, res: Response<ApiResponse<Cat
       return;
     }
 
+    // 1. اعتبارسنجی بدنه درخواست (از شمای partial استفاده می‌شود)
     const validationResult = updateCategorySchema.safeParse(req.body);
     
     if (!validationResult.success) {
@@ -131,16 +145,18 @@ export const updateCategory = async (req: Request, res: Response<ApiResponse<Cat
       return;
     }
 
-    // Clean data by removing undefined properties
+    // 2. پاکسازی داده‌ها
     const cleanData = Object.fromEntries(
       Object.entries(validationResult.data).filter(([_, value]) => value !== undefined)
     );
 
+    // 3. به‌روزرسانی رکورد
     const category = await prisma.category.update({
       where: { id },
       data: cleanData as any
     });
 
+    // 4. ارسال پاسخ موفقیت‌آمیز
     res.json({
       success: true,
       data: category as Category,
@@ -148,6 +164,7 @@ export const updateCategory = async (req: Request, res: Response<ApiResponse<Cat
     });
   } catch (error) {
     console.error('Update category error:', error);
+    // مدیریت خطای P2025 (رکورد پیدا نشد)
     if ((error as any).code === 'P2025') {
       res.status(404).json({
         success: false,
@@ -163,7 +180,8 @@ export const updateCategory = async (req: Request, res: Response<ApiResponse<Cat
 };
 
 /**
- * Delete category
+ * کنترلر حذف دسته‌بندی (Admin Only)
+ * وظیفه: حذف یک دسته‌بندی بر اساس شناسه.
  */
 export const deleteCategory = async (req: Request, res: Response<ApiResponse<null>>): Promise<void> => {
   try {
@@ -177,6 +195,7 @@ export const deleteCategory = async (req: Request, res: Response<ApiResponse<nul
       return;
     }
 
+    // حذف رکورد (Prisma به طور خودکار روابط آبشاری را مدیریت می‌کند)
     await prisma.category.delete({
       where: { id }
     });
@@ -187,6 +206,7 @@ export const deleteCategory = async (req: Request, res: Response<ApiResponse<nul
     });
   } catch (error) {
     console.error('Delete category error:', error);
+    // مدیریت خطای P2025 (رکورد پیدا نشد)
     if ((error as any).code === 'P2025') {
       res.status(404).json({
         success: false,

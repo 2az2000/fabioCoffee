@@ -1,5 +1,7 @@
+// این فایل مسیرهای (Routes) مربوط به مدیریت میزها (Tables) را تعریف می‌کند.
+
 import { Router } from 'express';
-import { getTables, getTableById } from '../controllers/tableController';
+import { getTables, getTableById } from '../controllers/tableController'; // کنترلرهای میز
 
 const router = Router();
 
@@ -7,11 +9,11 @@ const router = Router();
  * @swagger
  * /api/tables:
  *   get:
- *     summary: Get all tables
+ *     summary: دریافت تمام میزها
  *     tags: [Tables]
  *     responses:
  *       200:
- *         description: List of tables
+ *         description: لیست میزها
  *         content:
  *           application/json:
  *             schema:
@@ -37,7 +39,7 @@ router.get('/', getTables);
  * @swagger
  * /api/tables/{id}:
  *   get:
- *     summary: Get table by ID with active orders
+ *     summary: دریافت میز بر اساس شناسه به همراه سفارشات فعال
  *     tags: [Tables]
  *     parameters:
  *       - in: path
@@ -47,9 +49,9 @@ router.get('/', getTables);
  *           type: string
  *     responses:
  *       200:
- *         description: Table details with active orders
+ *         description: جزئیات میز به همراه سفارشات فعال (PENDING, PREPARING, READY)
  *       404:
- *         description: Table not found
+ *         description: میز پیدا نشد
  */
 router.get('/:id', getTableById);
 
