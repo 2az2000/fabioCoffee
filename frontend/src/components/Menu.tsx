@@ -1,305 +1,221 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Coffee, Plus, ShoppingCart } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Plus, Coffee as CoffeeIcon } from "lucide-react";
+import SmartImage from "./ImageSmart";
 
-interface Category {
-  id: string;
-  name: string;
-  description: string | null;
-  items?: Item[];
-}
-
+interface Category { id: string; name: string; items?: Item[]; }
 interface Item {
   id: string;
   name: string;
   description: string | null;
   price: number;
   imageUrl: string | null;
-  categoryId: string;
+  isActive: boolean;
 }
 
-/**
- * کامپوننت Menu
- * این کامپوننت منوی اصلی کافه را نمایش می‌دهد و منطق مدیریت سبد خرید (Cart) را در خود جای داده است.
- * منطق پیاده‌سازی:
- * 1. مدیریت وضعیت دسته‌بندی‌ها، وضعیت بارگذاری، آیتم انتخاب شده برای جزئیات و محتوای سبد خرید.
- * 2. فراخوانی API برای دریافت دسته‌بندی‌ها و آیتم‌های فعال.
- * 3. استفاده از کامپوننت‌های Tabs برای فیلتر کردن آیتم‌ها بر اساس دسته‌بندی.
- * 4. نمایش آیتم‌ها در قالب Card با انیمیشن‌های `framer-motion`.
- * 5. مدیریت افزودن آیتم به سبد خرید.
- */
-export default function Menu() {
-  const [categories, setCategories] = useState<Category[]>([]); // لیست دسته‌بندی‌ها
-  const [loading, setLoading] = useState(true); // وضعیت بارگذاری اولیه
-  const [loadingItems, setLoadingItems] = useState<{[key: string]: boolean}>({}); // وضعیت بارگذاری آیتم‌های هر دسته‌بندی
-  const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({}); // وضعیت بارگذاری تصاویر
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null); // آیتم انتخاب شده برای نمایش جزئیات
-  const [cart, setCart] = useState<{[key: string]: number}>({}); // سبد خرید: {itemId: quantity}
+export default function MenuBeautiful() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("");
+  const [cart, setCart] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
 
-  // بارگذاری دسته‌بندی‌ها در زمان mount شدن
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // تابع فراخوانی API برای دریافت دسته‌بندی‌ها
   const fetchCategories = async () => {
     try {
-      const categoriesRes = await fetch('http://localhost:3001/api/categories');
-      if (!categoriesRes.ok) throw new Error('خطا در دریافت دسته‌بندی‌ها');
+      const res = await fetch("http://localhost:3001/api/categories");
+      const { data } = await res.json();
+      setCategories(data);
+      if (data.length > 0) setActiveTab(data[0].id);
       
-      const { data: categories } = await categoriesRes.json();
-      setCategories(categories);
-    } catch (error) {
-      console.error('خطا در دریافت دسته‌بندی‌ها:', error);
+      // بارگذاری اولین دسته‌بندی
+      if (data[0]) fetchItems(data[0].id);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // تابع فراخوانی API برای دریافت آیتم‌های یک دسته‌بندی
-  const fetchCategoryItems = async (categoryId: string) => {
-    try {
-      setLoadingItems(prev => ({ ...prev, [categoryId]: true }));
-      
-      const itemsRes = await fetch(`http://localhost:3001/api/items?categoryId=${categoryId}`);
-      if (!itemsRes.ok) throw new Error('خطا در دریافت آیتم‌های منو');
-      
-      const { data: items } = await itemsRes.json();
-      
-      setCategories(prev => 
-        prev.map(cat => 
-          cat.id === categoryId ? { ...cat, items } : cat
-        )
-      );
-    } catch (error) {
-      console.error('خطا در دریافت آیتم‌های منو:', error);
-    } finally {
-      setLoadingItems(prev => ({ ...prev, [categoryId]: false }));
-    }
+  const fetchItems = async (catId: string) => {
+    const res = await fetch(`http://localhost:3001/api/items?categoryId=${catId}`);
+    const { data } = await res.json();
+    setCategories(prev => prev.map(cat => 
+      cat.id === catId ? { ...cat, items: data } : cat
+    ));
   };
 
-  // تابع مدیریت تغییر تب‌ها
-  const handleTabChange = (categoryId: string) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    if (category && !category.items) {
-      // Reset image loading states when changing tabs
-      setImageLoading({});
-      fetchCategoryItems(categoryId);
-    }
-  };
-
-  // تابع افزودن یک آیتم به سبد خرید
   const addToCart = (itemId: string) => {
-    setCart(prev => ({
-      ...prev,
-      [itemId]: (prev[itemId] || 0) + 1 // افزایش تعداد آیتم
-    }));
+    setCart(prev => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
   };
 
-  // محاسبه تعداد کل آیتم‌های موجود در سبد خرید
-  const getTotalItems = () => {
-    return Object.values(cart).reduce((sum, count) => sum + count, 0);
-  };
+  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
 
-  // نمایش وضعیت بارگذاری
   if (loading) {
     return (
-      <section className="min-h-screen py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="inline-block"
-          >
-            <Coffee className="w-12 h-12 text-amber-600" />
-          </motion.div>
-          <p className="mt-4 text-amber-800">در حال بارگذاری منو، لطفاً شکیبا باشید...</p>
-        </div>
-      </section>
-    );
-  }
-
-  // نمایش پیام خالی
-  if (categories.length === 0) {
-    return (
-      <section className="min-h-screen py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <Coffee className="w-16 h-16 mx-auto text-amber-600 mb-4" />
-          <h3 className="text-xl font-medium text-amber-800">منوی خالی است</h3>
-          <p className="text-amber-600 mt-2">در حال حاضر آیتمی برای نمایش وجود ندارد</p>
-        </div>
-      </section>
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-24 h-24 bg-amber-600 rounded-full flex items-center justify-center shadow-2xl"
+        >
+          <CoffeeIcon className="w-12 h-12 text-white" />
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <section className="py-20 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* هدر بخش منو */}
+    <section className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 py-16 px-4">
+      <div className="max-w-7xl mx-auto">
+
+        {/* هدر زیبا */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            منوی کافه فابیو
-          </h2>
-          <p className="text-xl text-muted-foreground">
-            بهترین نوشیدنی‌ها و دسرها را در فابیو کافه تجربه کنید
+          <h1 className="text-5xl md:text-7xl font-bold text-amber-900 mb-4">
+            منوی فابیو کافه
+          </h1>
+          <p className="text-xl text-amber-700 font-medium">
+            هر جرعه، یک تجربه
           </p>
+          <div className="w-32 h-1 bg-gradient-to-r from-amber-600 to-orange-600 mx-auto mt-6 rounded-full" />
         </motion.div>
 
-        {/* نشان سبد خرید (Cart Badge) - در گوشه پایین سمت چپ */}
-        <AnimatePresence>
-          {getTotalItems() > 0 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="fixed bottom-6 left-6 bg-primary text-primary-foreground p-3 rounded-full shadow-lg z-50 cursor-pointer hover:bg-primary/90 transition-colors"
+        {/* تب‌های لوکس */}
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
+          {categories.map((cat) => (
+            <motion.button
+              key={cat.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
-                // Add your cart modal or navigation logic here
-                console.log('Open cart');
+                setActiveTab(cat.id);
+                if (!cat.items) fetchItems(cat.id);
               }}
+              className={`px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 shadow-lg ${
+                activeTab === cat.id
+                  ? "bg-amber-700 text-white shadow-amber-700/50"
+                  : "bg-white/80 text-amber-800 hover:bg-amber-100 backdrop-blur-sm border border-amber-200"
+              }`}
             >
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5" />
-                <span className="font-bold">{getTotalItems()}</span>
-              </div>
+              {cat.name}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* کارت‌های آیتم */}
+        <motion.div
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+        >
+          <AnimatePresence mode="popLayout">
+            {categories.find(c => c.id === activeTab)?.items?.map((item, i) => (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9, y: 50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: i * 0.1 }}
+                className="group"
+              >
+                <div className={`relative overflow-hidden rounded-3xl shadow-xl transition-all duration-500 ${
+                  !item.isActive ? "opacity-70" : "hover:shadow-2xl hover:-translate-y-3"
+                } bg-white`}>
+                  
+                  {/* تصویر */}
+                  <div className="relative h-64 overflow-hidden">
+                    <SmartImage
+                      src={item.imageUrl}
+                      alt={item.name}
+                      fill
+                      objectFit="cover"
+                      rounded="none"
+                      className="transition-transform duration-700 group-hover:scale-110"
+                    />
+
+                    {/* افکت گرادیانت طلایی */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                    {/* لیبل تمام شد */}
+                    {!item.isActive && (
+                      <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <div className="bg-red-600/90 text-white px-8 py-4 rounded-full text-2xl font-bold shadow-2xl backdrop-blur-sm">
+                          تمام شد
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* محتوا */}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-amber-900 mb-2">
+                      {item.name}
+                    </h3>
+                    
+                    {item.description && (
+                      <p className="text-amber-700 text-sm leading-relaxed mb-4 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-6">
+                      <span className="text-3xl font-bold text-amber-800">
+                        {item.price.toLocaleString("fa-IR")} ₺
+                      </span>
+
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => item.isActive && addToCart(item.id)}
+                        disabled={!item.isActive}
+                        className={`px-6 py-3 rounded-full font-bold text-lg transition-all flex items-center gap-2 ${
+                          item.isActive
+                            ? "bg-amber-600 hover:bg-amber-700 text-white shadow-lg"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        }`}
+                      >
+                        <Plus className="w-5 h-5" />
+                        {item.isActive ? "افزودن" : "ناموجود"}
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* سبد خرید شناور */}
+        <AnimatePresence>
+          {totalItems > 0 && (
+            <motion.div
+              initial={{ scale: 0, y: 100 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0, y: 100 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+            >
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="bg-amber-700 text-white px-8 py-5 rounded-full shadow-2xl flex items-center gap-4 text-xl font-bold"
+              >
+                <ShoppingCart className="w-8 h-8" />
+                <span>{totalItems} آیتم در سبد</span>
+                <span className="bg-white/20 px-4 py-2 rounded-full text-lg">
+                  مشاهده سبد
+                </span>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* تب‌های منو برای فیلتر دسته‌بندی‌ها */}
-        <Tabs 
-          defaultValue={categories[0]?.id} 
-          className="w-full"
-          onValueChange={handleTabChange}
-        >
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 md:grid-cols-4 gap-2 mb-12 p-1.5 bg-muted rounded-xl">
-            {categories.map((category) => (
-              <TabsTrigger 
-                key={category.id} 
-                value={category.id}
-                disabled={loadingItems[category.id]}
-                className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-lg py-2 px-4 transition-all"
-              >
-                {loadingItems[category.id] ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div 
-                      className="w-3 h-3 rounded-full border-2 border-primary border-t-transparent"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <span>{category.name}</span>
-                  </div>
-                ) : (
-                  category.name
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {/* محتوای هر تب (آیتم‌های دسته‌بندی) */}
-          {categories.map((category) => (
-            <TabsContent key={category.id} value={category.id}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {category.items?.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    {/* کارت نمایش آیتم */}
-                    <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden p-0">
-                      <CardHeader className="p-0">
-                        <div className="relative h-48 overflow-hidden rounded-t-lg">
-                          {item.imageUrl ? (
-                            <div className="relative h-full w-full">
-                              {/* Placeholder while image is loading */}
-                              {imageLoading[item.id] && (
-                                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100 animate-pulse flex items-center justify-center">
-                                  <motion.div
-                                    className="w-8 h-8 rounded-full border-4 border-amber-200 border-t-amber-600"
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                  />
-                                </div>
-                              )}
-                              
-                              {/* Actual Image */}
-                              <Image
-                                src={item.imageUrl || '/file.svg'}
-                                alt={item.name}
-                                fill
-                                className={`object-cover group-hover:scale-105 transition-transform duration-300 ${imageLoading[item.id] ? 'opacity-0' : 'opacity-100'}`}
-                                onLoadingComplete={() => {
-                                  setImageLoading(prev => ({ ...prev, [item.id]: false }));
-                                }}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.onerror = null;
-                                  target.src = '/file.svg';
-                                  setImageLoading(prev => ({ ...prev, [item.id]: false }));
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            // نمایش جایگزین در صورت نبود تصویر
-                            <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                              <Coffee className="w-16 h-16 text-amber-600" />
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <CardTitle className="text-xl font-bold text-amber-900 mb-2">
-                          {item.name}
-                        </CardTitle>
-                        {item.description && (
-                          <CardDescription className="text-amber-700 mb-3">
-                            {item.description}
-                          </CardDescription>
-                        )}
-                        <div className="flex items-center justify-between">
-                          {/* نمایش قیمت به تومان با فرمت فارسی */}
-                          <span className="text-2xl font-bold text-amber-800">
-                            {item.price.toLocaleString('fa-IR')} تومان
-                          </span>
-                          {/* دکمه افزودن به سبد خرید */}
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(item.id);
-                            }}
-                            size="sm"
-                            className="bg-amber-600 hover:bg-amber-700"
-                          >
-                            <Plus className="w-4 h-4 ml-1" />
-                            افزودن
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </TabsContent>
-          ))}
-        </Tabs>
       </div>
     </section>
   );

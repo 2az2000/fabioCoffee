@@ -1,69 +1,68 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-
 import { motion } from 'framer-motion';
 import { Coffee, LogOut, LayoutDashboard, Package, ShoppingCart, Users } from 'lucide-react';
 
-/**
- * کامپوننت AdminLayout
- * این لایه برای صفحات پنل مدیریت استفاده می‌شود و شامل نوار کناری (Sidebar) و منطق احراز هویت سمت کلاینت است.
- * منطق پیاده‌سازی:
- * 1. بررسی وجود توکن `adminToken` در `localStorage`.
- * 2. در صورت عدم وجود توکن، کاربر به صفحه ورود هدایت می‌شود.
- * 3. مدیریت وضعیت بارگذاری (Loading) تا زمان بررسی توکن.
- */
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter(); // هوک مسیریابی Next.js
+  const router = useRouter();
   const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = در حال بررسی
+  const [mounted, setMounted] = useState(false);
 
-  const isBrowser = typeof window !== 'undefined';
-  const token = isBrowser ? localStorage.getItem('adminToken') : null;
-  const isAuthenticated = !!token;
-
-  // useEffect برای همگام‌سازی مسیر با وضعیت احراز هویت
+  // فقط یک بار بعد از mount شدن کلاینت اجرا بشه
   useEffect(() => {
-    if (!isBrowser) {
-      return;
-    }
+    setMounted(true);
 
-    // اگر در صفحه لاگین هستیم، فقط در صورت وجود توکن به داشبورد هدایت می‌کنیم
+    const token = localStorage.getItem('adminToken');
+    const authenticated = !!token;
+    setIsAuthenticated(authenticated);
+
+    // منطق ریدایرکت
     if (pathname === '/admin/login') {
-      if (isAuthenticated) {
+      if (authenticated) {
         router.replace('/admin/dashboard');
       }
       return;
     }
 
-    // برای سایر صفحات ادمین، حتماً باید توکن وجود داشته باشد
-    if (!isAuthenticated) {
+    if (!authenticated) {
       router.replace('/admin/login');
     }
-  }, [isAuthenticated, isBrowser, pathname, router]);
+  }, [pathname, router]);
 
-  // تابع خروج از سیستم
   const handleLogout = () => {
-    localStorage.removeItem('adminToken'); // حذف توکن
-    localStorage.removeItem('adminData'); // حذف اطلاعات مدیر
-    router.push('/admin/login'); // هدایت به صفحه ورود
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    router.push('/admin/login');
   };
 
-  // صفحه لاگین بدون لایه ادمین نمایش داده می‌شود
-  if (pathname === '/admin/login') {
-    return children;
+  // اگر هنوز mount نشده یا در حال بررسی احراز هویت هستیم
+  if (!mounted || isAuthenticated === null) {
+    // فقط محتوای اصلی رو نشون بده (بدون سایدبار)
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {children}
+      </div>
+    );
   }
 
+  // اگر لاگین هستیم، فقط children رو نشون بده
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  // اگر احراز هویت نشده
   if (!isAuthenticated) {
     return null;
   }
 
-  // تعریف آیتم‌های منوی نوار کناری
   const menuItems = [
     { href: '/admin/dashboard', label: 'داشبورد', icon: LayoutDashboard },
     { href: '/admin/categories', label: 'دسته‌بندی‌ها', icon: Package },
@@ -74,14 +73,15 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* نوار کناری (Sidebar) */}
+      {/* سایدبار - فقط در کلاینت رندر میشه */}
       <motion.div
-        initial={{ x: 250 }} // انیمیشن ورود از چپ
-        animate={{ x: 0 }}
-        className="w-64 bg-white shadow-lg"
+        initial={{ x: 300, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-64 bg-white shadow-xl fixed right-0 top-0 h-screen overflow-y-auto z-40"
       >
         <div className="p-6 border-b">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
               <Coffee className="w-6 h-6 text-white" />
             </div>
@@ -96,11 +96,16 @@ export default function AdminLayout({
           <ul className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
+              const isActive = pathname === item.href;
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                      isActive
+                        ? "bg-amber-100 text-amber-700 font-medium shadow-sm"
+                        : "text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                    }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
@@ -111,11 +116,10 @@ export default function AdminLayout({
           </ul>
         </nav>
 
-        {/* دکمه خروج */}
-        <div className="absolute bottom-0 w-64 p-4 border-t">
+        <div className="absolute bottom-0 w-full p-4 border-t bg-white">
           <button
             onClick={handleLogout}
-            className="flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 w-full transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 w-full transition-colors"
           >
             <LogOut className="w-5 h-5" />
             <span>خروج</span>
@@ -124,14 +128,15 @@ export default function AdminLayout({
       </motion.div>
 
       {/* محتوای اصلی */}
-      <div className="flex-1 overflow-auto">
-        <motion.div
-          initial={{ opacity: 0 }} // انیمیشن محو شدن
-          animate={{ opacity: 1 }}
-          className="p-8"
+      <div className="mr-64 flex-1">
+        <motion.main
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="p-8 min-h-screen"
         >
           {children}
-        </motion.div>
+        </motion.main>
       </div>
     </div>
   );

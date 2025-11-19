@@ -29,7 +29,7 @@ export default function OrdersPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <ShoppingCart className="w-12 h-12 text-amber-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">در حال بارگذاری سفارشها...</p>
+          <p className="text-gray-600">در حال بارگذاری سفارش ها...</p>
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">مدیریت سفارشها</h1>
+        <h1 className="text-3xl font-bold text-gray-900">مدیریت سفارش ها</h1>
         <div className="text-sm text-gray-600">تعداد سفارش: {orders.length}</div>
       </div>
 

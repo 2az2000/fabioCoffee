@@ -25,7 +25,7 @@ export const updateCategorySchema = createCategorySchema.partial();
 export const createItemSchema = z.object({
   name: z.string().min(1, 'Item name is required').max(100, 'Item name must be less than 100 characters'),
   description: z.string().nullable().optional(),
-  price: z.number().positive('Price must be positive').max(10000, 'Price must be less than 10000'),
+  price: z.number().positive('Price must be positive').max(1000000, 'Price must be less than 1000000'),
   imageUrl: z.string().url('Must be a valid URL').nullable().optional().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
   categoryId: z.string().min(1, 'Category ID is required'), // شناسه دسته‌بندی الزامی است
