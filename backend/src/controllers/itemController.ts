@@ -12,8 +12,8 @@ export const getItems = async (req: Request, res: Response<ApiResponse<Item[]>>)
   try {
     const { categoryId, search } = req.query;
     
-    // شرط اولیه: فقط آیتم‌های فعال
-    const where: any = { isActive: true };
+    // شرط اولیه: تمام آیتم‌ها (برای ادمین)
+    const where: any = {};
     
     // فیلتر بر اساس شناسه دسته‌بندی
     if (categoryId) {

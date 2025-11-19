@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+
 import { motion } from 'framer-motion';
 import { Coffee, LogOut, LayoutDashboard, Package, ShoppingCart, Users } from 'lucide-react';
 
@@ -18,20 +20,32 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isLoading, setIsLoading] = useState(true); // وضعیت بارگذاری اولیه
   const router = useRouter(); // هوک مسیریابی Next.js
+  const pathname = usePathname();
 
-  // useEffect برای بررسی توکن در زمان بارگذاری کامپوننت
+  const isBrowser = typeof window !== 'undefined';
+  const token = isBrowser ? localStorage.getItem('adminToken') : null;
+  const isAuthenticated = !!token;
+
+  // useEffect برای همگام‌سازی مسیر با وضعیت احراز هویت
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      // اگر توکن وجود نداشت، به صفحه ورود هدایت کن
-      router.push('/admin/login');
-    } else {
-      // اگر توکن وجود داشت، بارگذاری کامل شده است
-      setIsLoading(false);
+    if (!isBrowser) {
+      return;
     }
-  }, [router]);
+
+    // اگر در صفحه لاگین هستیم، فقط در صورت وجود توکن به داشبورد هدایت می‌کنیم
+    if (pathname === '/admin/login') {
+      if (isAuthenticated) {
+        router.replace('/admin/dashboard');
+      }
+      return;
+    }
+
+    // برای سایر صفحات ادمین، حتماً باید توکن وجود داشته باشد
+    if (!isAuthenticated) {
+      router.replace('/admin/login');
+    }
+  }, [isAuthenticated, isBrowser, pathname, router]);
 
   // تابع خروج از سیستم
   const handleLogout = () => {
@@ -40,16 +54,13 @@ export default function AdminLayout({
     router.push('/admin/login'); // هدایت به صفحه ورود
   };
 
-  // نمایش صفحه بارگذاری در حین بررسی توکن
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Coffee className="w-12 h-12 text-amber-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">در حال بارگذاری...</p>
-        </div>
-      </div>
-    );
+  // صفحه لاگین بدون لایه ادمین نمایش داده می‌شود
+  if (pathname === '/admin/login') {
+    return children;
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   // تعریف آیتم‌های منوی نوار کناری
@@ -65,7 +76,7 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50 flex">
       {/* نوار کناری (Sidebar) */}
       <motion.div
-        initial={{ x: -250 }} // انیمیشن ورود از چپ
+        initial={{ x: 250 }} // انیمیشن ورود از چپ
         animate={{ x: 0 }}
         className="w-64 bg-white shadow-lg"
       >
@@ -87,13 +98,13 @@ export default function AdminLayout({
               const Icon = item.icon;
               return (
                 <li key={item.href}>
-                  <a
+                  <Link
                     href={item.href}
                     className="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
-                  </a>
+                  </Link>
                 </li>
               );
             })}
