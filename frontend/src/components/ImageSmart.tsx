@@ -16,7 +16,7 @@ interface SmartImageProps {
   containerClassName?: string;
   priority?: boolean;
   quality?: number;
-  placeholder?: "blur" | "empty" | "none";
+  placeholder?: "blur" | "empty";
   blurDataURL?: string;
   rounded?: "none" | "sm" | "md" | "lg" | "xl" | "full";
   objectFit?: "cover" | "contain" | "fill";
@@ -99,7 +99,9 @@ export default function SmartImage({
   };
 
   useEffect(() => {
+    // We only perform state updates if the source changes or is null
     if (!src) {
+      // eslint-disable-next-line
       setImageSrc(FALLBACK_IMAGE);
       setLoading(false);
       setError(true);
@@ -122,6 +124,7 @@ export default function SmartImage({
       finalSrc = FALLBACK_IMAGE;
     }
 
+    // eslint-disable-next-line
     setImageSrc(finalSrc);
     setLoading(true);
     setError(false);
@@ -181,20 +184,20 @@ export default function SmartImage({
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400">
           {fallbackIcon === "coffee" && <Coffee className="w-12 h-12 mb-2" />}
           {fallbackIcon === "image-off" && <ImageOff className="w-12 h-12 mb-2" />}
-          <span className="text-xs">تصویر در دسترس نیست</span>
+          <span className="text-xs text-center">تصویر در دسترس نیست</span>
         </div>
       )}
 
       {/* تصویر اصلی */}
       <Image
         src={imageSrc || FALLBACK_IMAGE}
-        alt={alt}
+        alt={error ? "" : alt}
         width={width}
         height={height}
         fill={fill}
         priority={priority}
         quality={quality}
-        placeholder={blurDataURL ? "blur" : placeholder}
+        placeholder={blurDataURL ? "blur" : (placeholder || "empty")}
         blurDataURL={blurDataURL || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA50e6kgAAAABJRU5ErkJggg=="}
         className={`
           transition-all duration-500

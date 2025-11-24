@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       {/* بخش معرفی کافه */}
-      <Hero />
+      {/* <Hero /> */}
       {/* بخش منو و سفارش‌گیری */}
       <Menu />
     </main>
