@@ -10,7 +10,7 @@ import { ApiResponse, Item } from '../types';
  */
 export const getItems = async (req: Request, res: Response<ApiResponse<Item[]>>): Promise<void> => {
   try {
-    const { categoryId, search } = req.query;
+    const { categoryId, search, active } = req.query;
     
     // شرط اولیه: تمام آیتم‌ها (برای ادمین)
     const where: any = {};
@@ -26,6 +26,11 @@ export const getItems = async (req: Request, res: Response<ApiResponse<Item[]>>)
         { name: { contains: search as string, mode: 'insensitive' } }, // جستجوی نام
         { description: { contains: search as string, mode: 'insensitive' } } // جستجوی توضیحات
       ];
+    }
+
+    // فقط آیتم‌های فعال (برای منوی عمومی)
+    if (active === 'true') {
+      where.isActive = true;
     }
 
     // بازیابی آیتم‌ها به همراه اطلاعات دسته‌بندی مرتبط

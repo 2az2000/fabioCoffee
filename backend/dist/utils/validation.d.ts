@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 export declare const createCategorySchema: z.ZodObject<{
     name: z.ZodString;
     description: z.ZodOptional<z.ZodString>;
@@ -25,20 +25,24 @@ export declare const updateCategorySchema: z.ZodObject<{
     description?: string | undefined;
     isActive?: boolean | undefined;
 }>;
-export declare const createItemSchema: z.ZodObject<{
+export declare const createItemSchema: z.ZodEffects<z.ZodObject<{
     name: z.ZodString;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     price: z.ZodNumber;
     imageUrl: z.ZodUnion<[z.ZodOptional<z.ZodNullable<z.ZodString>>, z.ZodLiteral<"">]>;
     isActive: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+    isWeighted: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+    pricingBaseGrams: z.ZodOptional<z.ZodNumber>;
     categoryId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     name: string;
     isActive: boolean;
     price: number;
+    isWeighted: boolean;
     categoryId: string;
     description?: string | null | undefined;
     imageUrl?: string | null | undefined;
+    pricingBaseGrams?: number | undefined;
 }, {
     name: string;
     price: number;
@@ -46,13 +50,35 @@ export declare const createItemSchema: z.ZodObject<{
     description?: string | null | undefined;
     isActive?: boolean | undefined;
     imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
+}>, {
+    name: string;
+    isActive: boolean;
+    price: number;
+    isWeighted: boolean;
+    categoryId: string;
+    description?: string | null | undefined;
+    imageUrl?: string | null | undefined;
+    pricingBaseGrams?: number | undefined;
+}, {
+    name: string;
+    price: number;
+    categoryId: string;
+    description?: string | null | undefined;
+    isActive?: boolean | undefined;
+    imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
 }>;
-export declare const updateItemSchema: z.ZodObject<{
+export declare const updateItemSchema: z.ZodEffects<z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     price: z.ZodOptional<z.ZodNumber>;
     imageUrl: z.ZodOptional<z.ZodUnion<[z.ZodOptional<z.ZodNullable<z.ZodString>>, z.ZodLiteral<"">]>>;
     isActive: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodBoolean>>>;
+    isWeighted: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodBoolean>>>;
+    pricingBaseGrams: z.ZodOptional<z.ZodOptional<z.ZodNumber>>;
     categoryId: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     name?: string | undefined;
@@ -60,6 +86,8 @@ export declare const updateItemSchema: z.ZodObject<{
     isActive?: boolean | undefined;
     price?: number | undefined;
     imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
     categoryId?: string | undefined;
 }, {
     name?: string | undefined;
@@ -67,6 +95,26 @@ export declare const updateItemSchema: z.ZodObject<{
     isActive?: boolean | undefined;
     price?: number | undefined;
     imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
+    categoryId?: string | undefined;
+}>, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    isActive?: boolean | undefined;
+    price?: number | undefined;
+    imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
+    categoryId?: string | undefined;
+}, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    isActive?: boolean | undefined;
+    price?: number | undefined;
+    imageUrl?: string | null | undefined;
+    isWeighted?: boolean | undefined;
+    pricingBaseGrams?: number | undefined;
     categoryId?: string | undefined;
 }>;
 export declare const loginSchema: z.ZodObject<{

@@ -8,6 +8,7 @@ import morgan from 'morgan'; // برای لاگ‌گیری درخواست‌ها
 import swaggerJsdoc from 'swagger-jsdoc'; // برای تولید مستندات Swagger از کامنت‌های JSDoc
 import swaggerUi from 'swagger-ui-express'; // برای نمایش رابط کاربری Swagger
 import dotenv from 'dotenv'; // برای بارگذاری متغیرهای محیطی
+import path from 'path';
 
 // وارد کردن مسیرهای (Routes) مختلف برنامه
 import authRoutes from './routes/auth'; // مسیرهای احراز هویت (ورود مدیر)
@@ -18,6 +19,7 @@ import tableRoutes from './routes/tables'; // مسیرهای مدیریت میز
 
 // وارد کردن میان‌افزار مدیریت خطا
 import { errorHandler } from './middleware/error';
+import { UPLOADS_DIR } from './config/uploads';
 
 // بارگذاری متغیرهای محیطی از فایل .env
 dotenv.config();
@@ -59,11 +61,16 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // میان‌افزارهای اصلی (Core Middleware)
-app.use(helmet()); // تنظیم هدرهای امنیتی
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+})); // تنظیم هدرهای امنیتی با اجازه بارگذاری منابع در مبدأهای دیگر (برای تصاویر)
 app.use(cors()); // فعال‌سازی CORS
 app.use(morgan('combined')); // لاگ‌گیری درخواست‌ها
 app.use(express.json({ limit: '10mb' })); // تجزیه بدنه درخواست‌های JSON
 app.use(express.urlencoded({ extended: true })); // تجزیه داده‌های URL-encoded
+
+// سرو فایل‌های آپلود شده (پوشه‌ی مشترک با مسیر آپلود)
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // نقطه پایانی بررسی سلامت (Health check endpoint)
 app.get('/health', (req, res) => {

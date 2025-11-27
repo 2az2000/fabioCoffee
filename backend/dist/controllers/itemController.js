@@ -5,8 +5,8 @@ const client_1 = require("../prisma/client");
 const validation_1 = require("../utils/validation");
 const getItems = async (req, res) => {
     try {
-        const { categoryId, search } = req.query;
-        const where = { isActive: true };
+        const { categoryId, search, active } = req.query;
+        const where = {};
         if (categoryId) {
             where.categoryId = categoryId;
         }
@@ -16,14 +16,21 @@ const getItems = async (req, res) => {
                 { description: { contains: search, mode: 'insensitive' } }
             ];
         }
+        if (active === 'true') {
+            where.isActive = true;
+        }
         const items = await client_1.prisma.item.findMany({
             where,
             include: { category: true },
             orderBy: { name: 'asc' }
         });
+        const formattedItems = items.map((item) => ({
+            ...item,
+            price: Number(item.price)
+        }));
         res.json({
             success: true,
-            data: items
+            data: formattedItems
         });
     }
     catch (error) {

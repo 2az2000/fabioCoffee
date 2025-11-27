@@ -2,7 +2,12 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, ShoppingCart } from 'lucide-react';
-import { CartItem } from './Menu'; // تایپ CartItem از کامپوننت Menu وارد می‌شود
+type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
 
 interface CartProps {
   isOpen: boolean;

@@ -10,6 +10,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const categories_1 = __importDefault(require("./routes/categories"));
 const items_1 = __importDefault(require("./routes/items"));
@@ -49,11 +50,14 @@ const swaggerOptions = {
     apis: ['./src/routes/*.ts']
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(swaggerOptions);
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use((0, cors_1.default)());
 app.use((0, morgan_1.default)('combined'));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'public', 'uploads')));
 app.get('/health', (req, res) => {
     res.json({
         success: true,

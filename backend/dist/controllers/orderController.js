@@ -121,7 +121,7 @@ const createOrder = async (req, res) => {
         }
         let totalPrice = 0;
         for (const orderItem of items) {
-            const item = existingItems.find(i => i.id === orderItem.itemId);
+            const item = existingItems.find((i) => i.id === orderItem.itemId);
             if (item) {
                 totalPrice += Number(item.price) * orderItem.quantity;
             }
@@ -133,7 +133,7 @@ const createOrder = async (req, res) => {
                 totalPrice,
                 items: {
                     create: items.map((item) => {
-                        const foundItem = existingItems.find(i => i.id === item.itemId);
+                        const foundItem = existingItems.find((i) => i.id === item.itemId);
                         return {
                             itemId: item.itemId,
                             quantity: item.quantity,

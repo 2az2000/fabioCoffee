@@ -12,6 +12,8 @@ export interface Item {
     name: string;
     description: string | null;
     price: number | any;
+    isWeighted?: boolean;
+    pricingBaseGrams?: number | null;
     imageUrl: string | null;
     isActive: boolean;
     createdAt: Date;
@@ -25,6 +27,34 @@ export interface Admin {
     password: string;
     createdAt: Date;
     updatedAt: Date;
+}
+export interface Table {
+    id: string;
+    number: number;
+    capacity: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    orders?: Order[];
+}
+export interface OrderItem {
+    id: string;
+    orderId: string;
+    itemId: string;
+    quantity: number;
+    price: number | any;
+    item?: Item;
+}
+export interface Order {
+    id: string;
+    tableId: string;
+    tableNumber: number;
+    totalPrice: number | any;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    items?: OrderItem[];
+    table?: Table;
 }
 import { Request } from 'express';
 export interface AuthRequest extends Request {
@@ -50,32 +80,5 @@ export interface LoginResponse {
         id: string;
         email: string;
     };
-}
-export interface Order {
-    id: string;
-    tableId: string;
-    tableNumber: number;
-    totalPrice: number | any;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
-    items?: OrderItem[];
-    table?: Table;
-}
-export interface OrderItem {
-    id: string;
-    orderId: string;
-    itemId: string;
-    quantity: number;
-    price: number | any;
-    item?: Item;
-}
-export interface Table {
-    id: string;
-    number: number;
-    capacity: number;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
 }
 //# sourceMappingURL=index.d.ts.map

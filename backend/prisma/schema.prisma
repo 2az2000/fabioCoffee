@@ -50,7 +50,9 @@ model Item {
   id          String   @id @default(cuid()) // شناسه منحصر به فرد
   name        String // نام آیتم
   description String? // توضیحات آیتم
-  price       Decimal  @db.Decimal(10, 2) // قیمت آیتم (با دقت 10 رقم و 2 رقم اعشار)
+  price       Decimal  @db.Decimal(10, 2) // قیمت پایه
+  isWeighted  Boolean  @default(false) // آیا قیمت‌گذاری بر مبنای وزن است
+  pricingBaseGrams Int? // مقدار گرم پایه برای قیمت پایه (مثلاً 1000 گرم)
   imageUrl    String? // آدرس تصویر آیتم
   isActive    Boolean  @default(true) // وضعیت فعال بودن
   createdAt   DateTime @default(now())

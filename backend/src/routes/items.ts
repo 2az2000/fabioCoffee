@@ -1,8 +1,21 @@
 import { Router } from 'express';
 import { getItems, getItemById, createItem, updateItem, deleteItem } from '../controllers/itemController';
 import { authenticateToken } from '../middleware/auth';
+import multer from 'multer';
+import path from 'path';
+import { UPLOADS_DIR, buildUploadUrl } from '../config/uploads';
 
 const router = Router();
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '');
+    cb(null, `${name}-${Date.now()}${ext}`);
+  }
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
@@ -176,5 +189,20 @@ router.put('/:id', authenticateToken, updateItem);
  *         description: Item not found
  */
 router.delete('/:id', authenticateToken, deleteItem);
+
+// Upload item image (Admin only)
+router.post('/upload', authenticateToken, upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ success: false, error: 'File is required' });
+      return;
+    }
+    const host = req.get('host') || 'localhost';
+    const url = buildUploadUrl(host, req.protocol, req.file.filename);
+    res.status(201).json({ success: true, data: { url }, message: 'Image uploaded' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
 export default router;

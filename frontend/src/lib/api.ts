@@ -2,7 +2,7 @@
 // وظیفه آن مدیریت تمام فراخوانی‌های HTTP به بک‌اند (http://localhost:3001/api) است.
 
 // آدرس پایه API بک‌اند
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = "http://localhost:3001/api";
 
 // -----------------------------------------------------------------------------
 // تعریف تایپ‌های داده (برای سازگاری با پاسخ‌های بک‌اند)
@@ -23,6 +23,8 @@ export interface Item {
   name: string;
   description: string | null;
   price: number;
+  isWeighted?: boolean;
+  pricingBaseGrams?: number | null;
   imageUrl: string | null;
   isActive: boolean;
   createdAt: string;
@@ -86,8 +88,8 @@ class ApiService {
 
   // کلیدهای ثابت برای انواع داده‌های اصلی
   private readonly CACHE_KEYS = {
-    CATEGORIES: 'categories',
-    ITEMS: 'items',
+    CATEGORIES: "categories",
+    ITEMS: "items",
   } as const;
 
   // زمان انقضای پیش‌فرض کش: ۵ دقیقه
@@ -112,7 +114,11 @@ class ApiService {
   /**
    * ذخیره در کش با TTL مشخص (یا TTL پیش‌فرض)
    */
-  private setCache<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
+  private setCache<T>(
+    key: string,
+    data: T,
+    ttl: number = this.DEFAULT_TTL
+  ): void {
     const entry: CacheEntry<T> = {
       data,
       timestamp: Date.now(),
@@ -148,16 +154,16 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     // بازیابی توکن مدیر از localStorage (اگر وجود داشته باشد)
-    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
 
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     // افزودن هدر Authorization برای مسیرهای محافظت شده
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     try {
@@ -169,28 +175,28 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401 && typeof window !== 'undefined') {
-          localStorage.removeItem('adminToken');
-          localStorage.removeItem('adminData');
-          if (window.location.pathname.startsWith('/admin')) {
-            window.location.href = '/admin/login';
+        if (response.status === 401 && typeof window !== "undefined") {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminData");
+          if (window.location.pathname.startsWith("/admin")) {
+            window.location.href = "/admin/login";
           }
         }
 
         return {
           success: false,
           error: data.error || response.statusText,
-          details: data.details
+          details: data.details,
         } as ApiResponse<T>;
       }
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       // مدیریت خطاهای شبکه
       return {
         success: false,
-        error: 'Network or server connection error'
+        error: "Network or server connection error",
       } as ApiResponse<T>;
     }
   }
@@ -207,7 +213,7 @@ class ApiService {
     }
 
     // در صورت نبودن یا منقضی شدن کش، درخواست به سرور
-    const response = await this.request<Category[]>('/categories');
+    const response = await this.request<Category[]>("/categories");
     if (response.success && response.data) {
       this.setCache(this.CACHE_KEYS.CATEGORIES, response.data);
     }
@@ -218,9 +224,12 @@ class ApiService {
     return this.request<Category>(`/categories/${id}`);
   }
 
-  async createCategory(data: { name: string; description?: string }): Promise<ApiResponse<Category>> {
-    const response = await this.request<Category>('/categories', {
-      method: 'POST',
+  async createCategory(data: {
+    name: string;
+    description?: string;
+  }): Promise<ApiResponse<Category>> {
+    const response = await this.request<Category>("/categories", {
+      method: "POST",
       body: JSON.stringify(data),
     });
     // بعد از ایجاد، کش دسته‌بندی‌ها را اینولید می‌کنیم تا دفعه بعد داده جدید خوانده شود
@@ -230,9 +239,12 @@ class ApiService {
     return response;
   }
 
-  async updateCategory(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<ApiResponse<Category>> {
+  async updateCategory(
+    id: string,
+    data: { name?: string; description?: string; isActive?: boolean }
+  ): Promise<ApiResponse<Category>> {
     const response = await this.request<Category>(`/categories/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
     });
     if (response.success) {
@@ -243,7 +255,7 @@ class ApiService {
 
   async deleteCategory(id: string): Promise<ApiResponse<void>> {
     const response = await this.request<void>(`/categories/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
     if (response.success) {
       this.invalidateCache(this.CACHE_KEYS.CATEGORIES);
@@ -261,7 +273,7 @@ class ApiService {
       return { success: true, data: cached };
     }
 
-    const response = await this.request<Item[]>('/items');
+    const response = await this.request<Item[]>("/items");
     if (response.success && response.data) {
       this.setCache(this.CACHE_KEYS.ITEMS, response.data);
     }
@@ -276,11 +288,14 @@ class ApiService {
     name: string;
     description?: string;
     price: number;
+    isWeighted?: boolean;
+    pricingBaseGrams?: number;
     imageUrl?: string;
     categoryId: string;
   }): Promise<ApiResponse<Item>> {
-    const response = await this.request<Item>('/items', {
-      method: 'POST',
+    const response = await this.request<Item>("/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     if (response.success) {
@@ -289,16 +304,22 @@ class ApiService {
     return response;
   }
 
-  async updateItem(id: string, data: {
-    name?: string;
-    description?: string;
-    price?: number;
-    imageUrl?: string;
-    categoryId?: string;
-    isActive?: boolean;
-  }): Promise<ApiResponse<Item>> {
+  async updateItem(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      price?: number;
+      isWeighted?: boolean;
+      pricingBaseGrams?: number;
+      imageUrl?: string;
+      categoryId?: string;
+      isActive?: boolean;
+    }
+  ): Promise<ApiResponse<Item>> {
     const response = await this.request<Item>(`/items/${id}`, {
-      method: 'PUT',
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     if (response.success) {
@@ -309,7 +330,7 @@ class ApiService {
 
   async deleteItem(id: string): Promise<ApiResponse<void>> {
     const response = await this.request<void>(`/items/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
     if (response.success) {
       this.invalidateCache(this.CACHE_KEYS.ITEMS);
@@ -321,11 +342,15 @@ class ApiService {
   // متدهای مربوط به سفارشات (Orders)
   // -----------------------------------------------------------------------------
 
-  async getOrders(params?: { status?: string; tableNumber?: number }): Promise<ApiResponse<Order[]>> {
+  async getOrders(params?: {
+    status?: string;
+    tableNumber?: number;
+  }): Promise<ApiResponse<Order[]>> {
     const queryParams = new URLSearchParams();
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.tableNumber) queryParams.append('tableNumber', params.tableNumber.toString());
-    
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.tableNumber)
+      queryParams.append("tableNumber", params.tableNumber.toString());
+
     return this.request<Order[]>(`/orders?${queryParams.toString()}`);
   }
 
@@ -337,15 +362,18 @@ class ApiService {
     tableId: string;
     items: { itemId: string; quantity: number }[];
   }): Promise<ApiResponse<Order>> {
-    return this.request<Order>('/orders', {
-      method: 'POST',
+    return this.request<Order>("/orders", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateOrderStatus(id: string, status: string): Promise<ApiResponse<Order>> {
+  async updateOrderStatus(
+    id: string,
+    status: string
+  ): Promise<ApiResponse<Order>> {
     return this.request<Order>(`/orders/${id}/status`, {
-      method: 'PATCH', // استفاده از PATCH برای به‌روزرسانی جزئی
+      method: "PATCH", // استفاده از PATCH برای به‌روزرسانی جزئی
       body: JSON.stringify({ status }),
     });
   }
@@ -355,7 +383,7 @@ class ApiService {
   // -----------------------------------------------------------------------------
 
   async getTables(): Promise<ApiResponse<Table[]>> {
-    return this.request<Table[]>('/tables');
+    return this.request<Table[]>("/tables");
   }
 
   async getTable(id: string): Promise<ApiResponse<Table>> {
@@ -366,10 +394,27 @@ class ApiService {
   // متدهای مربوط به احراز هویت (Auth)
   // -----------------------------------------------------------------------------
 
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; admin: { id: string; email: string } }>> {
-    return this.request<{ token: string; admin: { id: string; email: string } }>('/auth/login', {
-      method: 'POST',
+  async login(
+    email: string,
+    password: string
+  ): Promise<
+    ApiResponse<{ token: string; admin: { id: string; email: string } }>
+  > {
+    return this.request<{
+      token: string;
+      admin: { id: string; email: string };
+    }>("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async uploadItemImage(file: File): Promise<ApiResponse<{ url: string }>> {
+    const form = new FormData();
+    form.append("file", file);
+    return this.request<{ url: string }>(`/items/upload`, {
+      method: "POST",
+      body: form,
     });
   }
 }

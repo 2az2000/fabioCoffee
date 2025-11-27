@@ -29,7 +29,10 @@ export default function ItemsPage() {
     price: "",
     categoryId: "",
     imageUrl: "",
+    file: null as File | null,
     isActive: true,
+    isWeighted: false,
+    pricingBaseGrams: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -41,7 +44,10 @@ export default function ItemsPage() {
     price: "",
     categoryId: "",
     imageUrl: "",
+    file: null as File | null,
     isActive: true,
+    isWeighted: false,
+    pricingBaseGrams: "",
   });
 
   useEffect(() => {
@@ -87,7 +93,12 @@ export default function ItemsPage() {
       price: item.price.toString(),
       categoryId: item.categoryId,
       imageUrl: item.imageUrl || "",
+      file: null,
       isActive: item.isActive,
+      isWeighted: !!(item as any).isWeighted,
+      pricingBaseGrams: (item as any).pricingBaseGrams
+        ? (item as any).pricingBaseGrams.toString()
+        : "",
     });
   };
 
@@ -100,19 +111,31 @@ export default function ItemsPage() {
       price: "",
       categoryId: "",
       imageUrl: "",
+      file: null,
       isActive: true,
+      isWeighted: false,
+      pricingBaseGrams: "",
     });
   };
 
   // Save edited item
   const handleSave = async () => {
     if (!editingItem) return;
-
     setIsSaving(true);
     try {
+      let finalImageUrl = editForm.imageUrl || "";
+      if ((editForm as any).file) {
+        const up = await api.uploadItemImage((editForm as any).file);
+        if (up.success && up.data) finalImageUrl = up.data.url;
+      }
       const res = await api.updateItem(editingItem.id, {
         ...editForm,
         price: parseFloat(editForm.price),
+        isWeighted: !!(editForm as any).isWeighted,
+        pricingBaseGrams: (editForm as any).pricingBaseGrams
+          ? parseInt((editForm as any).pricingBaseGrams)
+          : undefined,
+        imageUrl: finalImageUrl || undefined,
       });
       if (res.success && res.data) {
         setItems((prev) =>
@@ -145,9 +168,19 @@ export default function ItemsPage() {
 
     setIsSaving(true);
     try {
+      let finalImageUrl = addForm.imageUrl || "";
+      if (addForm.file) {
+        const up = await api.uploadItemImage(addForm.file);
+        if (up.success && up.data) finalImageUrl = up.data.url;
+      }
       const res = await api.createItem({
         ...addForm,
         price: parseFloat(addForm.price),
+        isWeighted: !!(addForm as any).isWeighted,
+        pricingBaseGrams: (addForm as any).pricingBaseGrams
+          ? parseInt((addForm as any).pricingBaseGrams)
+          : undefined,
+        imageUrl: finalImageUrl || undefined,
       });
       if (res.success && res.data) {
         setItems((prev) => [res.data!, ...prev]);
@@ -158,7 +191,10 @@ export default function ItemsPage() {
           price: "",
           categoryId: "",
           imageUrl: "",
+          file: null,
           isActive: true,
+          isWeighted: false,
+          pricingBaseGrams: "",
         });
       }
     } finally {
@@ -261,19 +297,19 @@ export default function ItemsPage() {
                 </div>
                 <div className="flex items-center justify-center h-full">
                   {/* <div className="w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center"> */}
-                    {/* <Coffee className="w-8 h-8 text-amber-600" /> */}
-                     <SmartImage
-                            src={item.imageUrl}
-                            alt={item.name}
-                            fill
-                            rounded="none"
-                            objectFit="cover"
-                            fallbackIcon="coffee"
-                            loadingShimmer={true}
-                            className={`transition-transform duration-300 ${
-                              !item.isActive ? "" : "group-hover:scale-105"
-                            }`}
-                          />
+                  {/* <Coffee className="w-8 h-8 text-amber-600" /> */}
+                  <SmartImage
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    rounded="none"
+                    objectFit="cover"
+                    fallbackIcon="coffee"
+                    loadingShimmer={true}
+                    className={`transition-transform duration-300 ${
+                      !item.isActive ? "" : "group-hover:scale-105"
+                    }`}
+                  />
                   {/* </div> */}
                 </div>
               </div>
@@ -563,6 +599,53 @@ export default function ItemsPage() {
                   آیتم فعال باشد
                 </label>
               </div>
+
+              {/* Weighted Pricing */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isWeightedEdit"
+                    checked={editForm.isWeighted}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        isWeighted: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="isWeightedEdit"
+                    className="text-sm text-gray-700"
+                  >
+                    قیمت‌گذاری بر اساس وزن (گرم)
+                  </label>
+                </div>
+                {editForm.isWeighted && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      گرم پایه برای قیمت (مثلاً 1000)
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.pricingBaseGrams}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          pricingBaseGrams: e.target.value,
+                        }))
+                      }
+                      placeholder="مثلاً 1000"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                    <p className="text-xs text-gray-500">
+                      قیمت وارد شده، قیمت {editForm.pricingBaseGrams || "..."}{" "}
+                      گرم است.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
@@ -675,6 +758,8 @@ export default function ItemsPage() {
                       imageUrl: "",
                       file: null,
                       isActive: true,
+                      isWeighted: false,
+                      pricingBaseGrams: "",
                     });
                   }}
                   className="p-2 rounded-lg hover:bg-white/50 text-gray-500 transition"
@@ -836,6 +921,53 @@ export default function ItemsPage() {
                   آیتم فعال باشد
                 </label>
               </div>
+
+              {/* Weighted Pricing */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isWeightedAdd"
+                    checked={addForm.isWeighted}
+                    onChange={(e) =>
+                      setAddForm((prev) => ({
+                        ...prev,
+                        isWeighted: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                  <label
+                    htmlFor="isWeightedAdd"
+                    className="text-sm text-gray-700"
+                  >
+                    قیمت‌گذاری بر اساس وزن (گرم)
+                  </label>
+                </div>
+                {addForm.isWeighted && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      گرم پایه برای قیمت (مثلاً 1000)
+                    </label>
+                    <input
+                      type="number"
+                      value={addForm.pricingBaseGrams}
+                      onChange={(e) =>
+                        setAddForm((prev) => ({
+                          ...prev,
+                          pricingBaseGrams: e.target.value,
+                        }))
+                      }
+                      placeholder="مثلاً 1000"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 transition"
+                    />
+                    <p className="text-xs text-gray-500">
+                      قیمت وارد شده، قیمت {addForm.pricingBaseGrams || "..."}{" "}
+                      گرم است.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
@@ -851,6 +983,8 @@ export default function ItemsPage() {
                     imageUrl: "",
                     file: null,
                     isActive: true,
+                    isWeighted: false,
+                    pricingBaseGrams: "",
                   });
                 }}
                 disabled={isSaving}
@@ -865,7 +999,8 @@ export default function ItemsPage() {
                   isSaving ||
                   !addForm.name.trim() ||
                   !addForm.price ||
-                  !addForm.categoryId
+                  !addForm.categoryId ||
+                  (addForm.isWeighted && !addForm.pricingBaseGrams)
                 }
                 className="px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >

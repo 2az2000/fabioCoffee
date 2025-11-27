@@ -21,6 +21,8 @@ export interface Item {
   name: string;
   description: string | null;
   price: number | any; // قیمت (از نوع Decimal در Prisma، در کنترلرها به number تبدیل می‌شود)
+  isWeighted?: boolean;
+  pricingBaseGrams?: number | null;
   imageUrl: string | null;
   isActive: boolean;
   createdAt: Date;
