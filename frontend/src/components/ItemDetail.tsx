@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus } from 'lucide-react';
 import { Item } from '@/lib/api';
+import Image from 'next/image';
 
 interface ItemDetailProps {
   item: Item | null;
@@ -61,7 +62,7 @@ export default function ItemDetail({
         <div className="relative">
           {/* نمایش تصویر آیتم */}
           {item.imageUrl ? (
-            <img
+            <Image
               src={item.imageUrl}
               alt={item.name}
               className="w-full h-64 object-cover"

@@ -109,25 +109,129 @@ export default function MenuPro() {
 
   return (
     <>
-      <section className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-16">
+      <section className="min-h-screen bg-gradient-to-br from-fabio-green-400 via-fabio-green-700 to-fabio-green-500 py-16">
         <div className="max-w-5xl mx-auto">
           {/* هدر مینیمال و شیک */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="relative text-center mb-16 py-12 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-amber-900 mb-3 fabio-logo">
-              کافه فابیو
-            </h1>
-            <div className="w-32 h-1 bg-gradient-to-r from-amber-600 to-orange-600 mx-auto rounded-full" />
+            {/* پس‌زمینه نور نرم */}
+            <motion.div
+              animate={{ opacity: [0.06, 0.14, 0.06] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 -z-10 pointer-events-none"
+            >
+              <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                    w-96 h-96 bg-fabio-green-600/20 rounded-full blur-3xl"
+              />
+            </motion.div>
+
+            {/* عنوان */}
+            <motion.h1 className="text-6xl md:text-7xl lg:text-8xl font-bold fabio-logo tracking-tight">
+              <motion.span
+                initial={{ y: 70, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{
+                  duration: 1.1,
+                  delay: 0.3,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                className="inline-block text-white/85"
+              >
+                کافه
+              </motion.span>{" "}
+              <motion.span
+                initial={{ y: 70, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{
+                  duration: 1.1,
+                  delay: 0.5,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                className="inline-block bg-gradient-to-r from-fabio-green-300 via-fabio-green-100 to-yellow-200 
+                 bg-clip-text text-transparent font-black"
+                style={{ textShadow: "0 4px 30px rgba(34, 197, 94, 0.25)" }}
+              >
+                فابیو
+              </motion.span>
+            </motion.h1>
+
+            {/* خط زیر عنوان */}
+            <div className="flex justify-center mt-8">
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{
+                  duration: 1.4,
+                  delay: 1.2,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
+                style={{ transformOrigin: "left" }}
+                className="relative h-px w-48 bg-gradient-to-r from-transparent via-fabio-green-500 to-transparent"
+              >
+                {/* لایه درخشان متحرک روی خط */}
+                <motion.div
+                  className="absolute inset-0 h-px bg-fabio-green-400/80"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{
+                    duration: 2.8,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+              </motion.div>
+            </div>
+
+            {/* ساب‌تایتل */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 1.6, ease: "easeOut" }}
+              className="mt-8 text-fabio-green-300/70 text-lg tracking-widest font-light uppercase"
+              style={{ letterSpacing: "0.5em" }}
+            >
+              Espresso · Amore · Milano
+            </motion.p>
+
+            {/* ذرات معلق — مشخص، زیبا، پخش در بالا و اطراف متن */}
+            {[...Array(40)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: Math.random() * 3 + 1.5 + "px",
+                  height: Math.random() * 3 + 1.5 + "px",
+                  background: i % 3 === 0 ? "#facc15" : "#94f9bb", // کمی طلایی هم قاطی شه
+                  boxShadow:
+                    i % 3 === 0 ? "0 0 12px #facc15" : "0 0 12px #94f9bb",
+                  left: `${5 + i * 4.8}%`,
+                  top: `${15 + Math.random() * 100}%`, // بیشتر در نیمه بالایی صفحه
+                }}
+                initial={{ opacity: 0, y: 100 }}
+                animate={{
+                  opacity: [0, 0.8, 0],
+                  y: [-140, -280],
+                  x: Math.sin(i) * (30 + i * 5),
+                }}
+                transition={{
+                  duration: 14 + i * 0.8,
+                  repeat: Infinity,
+                  delay: i * 0.4,
+                  ease: "linear",
+                }}
+              />
+            ))}
           </motion.div>
 
           {/* دسته‌بندی‌ها — خطی، زیبا، سریع و حرفه‌ای */}
           <div className="w-full mb-6 overflow-x-auto px-1 pb-2">
             {/* Inner container centered on larger screens, starting on mobile */}
             {/* Scrollable Container */}
-            <div className="flex mx-auto w-full sm:justify-center items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-2 py-2 shadow-lg border border-amber-200 overflow-x-auto custom-scrollbar">
+            <div className="flex mx-auto w-full sm:justify-center items-center gap-1 bg-fabio-green-400 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg border border-none overflow-x-auto custom-scrollbar">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -137,14 +241,14 @@ export default function MenuPro() {
                   }}
                   className={`relative px-3 py-2 flex items-center justify-center text-xl rounded-full font-medium transition-all duration-300 whitespace-nowrap fabio-logo ${
                     activeCategory === cat.id
-                      ? "text-white"
-                      : "text-amber-800 hover:text-amber-900"
+                      ? "text-black"
+                      : "text-white hover:text-white"
                   }`}
                 >
                   {activeCategory === cat.id && (
                     <motion.div
                       layoutId="activeCategory"
-                      className="absolute inset-0 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full -z-10"
+                      className="absolute inset-0 bg-gradient-to-r from-red-900 to-red-500 rounded-full -z-10"
                       transition={{
                         type: "spring",
                         stiffness: 400,
@@ -183,7 +287,7 @@ export default function MenuPro() {
                 */}
                   <Card
                     className={cn(
-                      "relative p-0 overflow-hidden transition-all duration-300 group",
+                      "relative p-0 overflow-hidden transition-all duration-300 group bg-fabio-green-400 border-none",
                       "flex flex-row sm:flex-col", // Responsive Layout (Image on left, Content on right)
                       item.isActive
                         ? "hover:shadow-2xl hover:-translate-y-1"
@@ -217,11 +321,14 @@ export default function MenuPro() {
                     <div className="w-2/3 sm:w-full flex flex-col justify-between p-4 sm:p-5">
                       {/* Header & Description */}
                       <div>
-                        <h3 className="font-semibold text-3xl text-amber-900 mb-1 fabio-logo">
+                        <h3
+                          className="font-semibold text-3xl bg-gradient-to-r from-fabio-green-800 via-fabio-green-200 to-yellow-200 
+                 bg-clip-text text-transparent mb-1 fabio-logo"
+                        >
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-lg text-amber-700 line-clamp-2 mb-3 fabio-logo">
+                          <p className="text-lg text-white line-clamp-2 mb-3 fabio-logo">
                             {item.description}
                           </p>
                         )}
@@ -229,14 +336,14 @@ export default function MenuPro() {
 
                       {/* Footer (Price and Button) */}
                       <div className="flex items-center justify-between mt-auto pt-2 sm:pt-4">
-                        <span className="text-xl font-bold text-amber-800 fabio-logo">
+                        <span className="text-xl font-bold text-black fabio-logo">
                           {item.isWeighted && item.pricingBaseGrams
                             ? `${item.price.toLocaleString("fa-IR")} تومان`
                             : `${item.price.toLocaleString("fa-IR")} تومان`}
                         </span>
 
                         {item.isWeighted && (
-                          <span className="text-xs text-amber-700">
+                          <span className="text-xs text-white">
                             قیمت پایه برای {item.pricingBaseGrams || 1000} گرم
                           </span>
                         )}

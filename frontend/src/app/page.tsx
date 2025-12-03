@@ -9,7 +9,7 @@ import Menu from "@/components/Menu"; // کامپوننت نمایش منو و �
  */
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+    <main className="min-h-screen">
       {/* بخش معرفی کافه */}
       {/* <Hero /> */}
       {/* بخش منو و سفارش‌گیری */}
