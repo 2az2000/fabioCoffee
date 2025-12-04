@@ -140,7 +140,7 @@ export default function SmartImage({
   return (
     <div
       className={`
-        relative overflow-hidden bg-gray-100
+        relative overflow-hidden
         ${fill ? "w-full h-full" : ""}
         ${roundedClasses[rounded]}
         ${containerClassName}
@@ -164,7 +164,7 @@ export default function SmartImage({
 
       {/* خطا یا fallback */}
       {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-100">
           {fallbackIcon === "coffee" && <Coffee className="w-12 h-12 mb-2" />}
           {fallbackIcon === "image-off" && (
             <ImageOff className="w-12 h-12 mb-2" />

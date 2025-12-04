@@ -15,6 +15,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 interface Category {
   id: string;
@@ -227,23 +228,24 @@ export default function MenuPro() {
             ))}
           </motion.div>
 
-          {/* دسته‌بندی‌ها — خطی، زیبا، سریع و حرفه‌ای */}
+          {/* دسته‌بندی‌ها */}
           <div className="w-full mb-6 overflow-x-auto px-1 pb-2">
             {/* Inner container centered on larger screens, starting on mobile */}
             {/* Scrollable Container */}
             <div className="flex mx-auto w-full sm:justify-center items-center gap-1 bg-fabio-green-400 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg border border-none overflow-x-auto custom-scrollbar">
               {categories.map((cat) => (
-                <button
+                <Button
                   key={cat.id}
+                  variant="category"
                   onClick={() => {
                     setActiveCategory(cat.id);
                     if (!cat.items) fetchItems(cat.id);
                   }}
-                  className={`relative px-3 py-2 flex items-center justify-center text-xl rounded-full font-medium transition-all duration-300 whitespace-nowrap fabio-logo ${
+                  className={
                     activeCategory === cat.id
                       ? "text-black"
                       : "text-white hover:text-white"
-                  }`}
+                  }
                 >
                   {activeCategory === cat.id && (
                     <motion.div
@@ -256,8 +258,9 @@ export default function MenuPro() {
                       }}
                     />
                   )}
+
                   {cat.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -287,8 +290,8 @@ export default function MenuPro() {
                 */}
                   <Card
                     className={cn(
-                      "relative p-0 overflow-hidden transition-all duration-300 group bg-fabio-green-400 border-none",
-                      "flex flex-row sm:flex-col", // Responsive Layout (Image on left, Content on right)
+                      "relative px-2 overflow-hidden transition-all duration-300 group bg-fabio-green-400 border-none",
+                      "flex items-center flex-row", // Responsive Layout (Image on left, Content on right)
                       item.isActive
                         ? "hover:shadow-2xl hover:-translate-y-1"
                         : "opacity-75"
@@ -296,16 +299,18 @@ export default function MenuPro() {
                     onClick={() => item.isWeighted && openWeightCalc(item)}
                   >
                     {/* تصویر (Image) - Occupies 1/3 of space on mobile, full width on desktop */}
-                    <div className="relative w-1/3 aspect-square sm:w-full overflow-hidden rounded-r-xl sm:rounded-t-xl sm:rounded-r-none">
+                    <div className="relative w-[120px] h-[120px] rounded-[50%] aspect-square overflow-hidden">
                       <SmartImage
                         src={item.imageUrl}
                         alt={item.name}
                         rounded={"none"}
+                        // width={110}
+                        // height={110}
                         fill
                         objectFit="cover"
                         className="transition-transform duration-700 group-hover:scale-110"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      {/* <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" /> */}
 
                       {/* لیبل تمام شد */}
                       {!item.isActive && (
@@ -318,7 +323,7 @@ export default function MenuPro() {
                     </div>
 
                     {/* محتوا (Content) - Occupies 2/3 of space on mobile, full width on desktop */}
-                    <div className="w-2/3 sm:w-full flex flex-col justify-between p-4 sm:p-5">
+                    <div className="flex flex-col justify-between sm:p-5">
                       {/* Header & Description */}
                       <div>
                         <h3
@@ -364,7 +369,7 @@ export default function MenuPro() {
                 exit={{ y: 100, opacity: 0 }}
                 className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
               >
-                <div className="bg-amber-700 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 text-lg font-medium">
+                <div className="bg-amber-700 text-white px-6 py-4 rounded-full shadow-2xl flex items-center text-lg font-medium">
                   <ShoppingCart className="w-6 h-6" />
                   <span>{totalItems} آیتم</span>
                   <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm">
