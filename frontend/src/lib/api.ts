@@ -281,6 +281,13 @@ class ApiService {
     return response;
   }
 
+  async getItemsByCategory(categoryId: string, active?: boolean): Promise<ApiResponse<Item[]>> {
+    const query = new URLSearchParams();
+    if (categoryId) query.append("categoryId", categoryId);
+    if (active !== undefined) query.append("active", active.toString());
+    return this.request<Item[]>(`/items?${query.toString()}`);
+  }
+
   async getItem(id: string): Promise<ApiResponse<Item>> {
     return this.request<Item>(`/items/${id}`);
   }
