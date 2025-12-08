@@ -106,13 +106,11 @@
         ```bash
         npm run seed
         ```
-        (توجه: فایل [`backend/src/scripts/seed.ts`](backend/src/scripts/seed.ts) باید حاوی منطق ایجاد مدیر پیش‌فرض باشد.)
 
 4.  **اجرای سرور بک‌اند**:
     ```bash
     npm run dev
     ```
-    سرور در پورت `3001` اجرا خواهد شد. مستندات API در آدرس `http://localhost:3001/api-docs` قابل دسترسی است.
 
 ### ۲.۳. راه‌اندازی فرانت‌اند (Frontend)
 
