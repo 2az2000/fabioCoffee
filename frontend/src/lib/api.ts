@@ -2,7 +2,8 @@
 // وظیفه آن مدیریت تمام فراخوانی‌های HTTP به بک‌اند (http://localhost:3001/api) است.
 
 // آدرس پایه API بک‌اند
-const API_BASE_URL = "http://localhost:3001/api";
+// const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // -----------------------------------------------------------------------------
 // تعریف تایپ‌های داده (برای سازگاری با پاسخ‌های بک‌اند)

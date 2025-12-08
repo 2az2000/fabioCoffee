@@ -26,6 +26,7 @@
   "author": "Fabio Cafe System",
   "license": "MIT",
   "dependencies": {
+    "next": "^16.0.7",
     "tailwindcss-animate": "^1.0.7"
   }
 }
