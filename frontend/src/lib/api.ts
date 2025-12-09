@@ -3,7 +3,7 @@
 
 // آدرس پایه API بک‌اند
 // const API_BASE_URL = "http://localhost:3001/api";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
 // -----------------------------------------------------------------------------
 // تعریف تایپ‌های داده (برای سازگاری با پاسخ‌های بک‌اند)
