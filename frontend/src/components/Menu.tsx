@@ -64,7 +64,7 @@ export default function MenuPro() {
 
   const fetchItems = async (catId: string) => {
     const res = await fetch(
-      `http://localhost:3001/api/items?categoryId=${catId}&active=true`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/items?categoryId=${catId}&active=true`
     );
     const { data } = await res.json();
     setCategories((prev) =>
