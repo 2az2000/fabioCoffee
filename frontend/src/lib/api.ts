@@ -413,6 +413,7 @@ class ApiService {
       admin: { id: string; email: string };
     }>("/auth/login", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
   }
